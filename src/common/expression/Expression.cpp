@@ -18,6 +18,7 @@
 #include "common/expression/AggregateExpression.h"
 #include "common/expression/LabelAttributeExpression.h"
 #include "common/expression/LabelExpression.h"
+#include "common/expression/ParameterExpression.h"
 #include "common/expression/LogicalExpression.h"
 #include "common/expression/PathBuildExpression.h"
 #include "common/expression/PropertyExpression.h"
@@ -498,6 +499,11 @@ Expression* Expression::decode(ObjectPool* pool, Expression::Decoder& decoder) {
             exp->resetFrom(decoder);
             return exp;
         }
+        case Expression::Kind::kParam: {
+            exp = LabelExpression::make(pool);
+            exp->resetFrom(decoder);
+            return exp;
+        }
         case Expression::Kind::kCase: {
             exp = CaseExpression::make(pool);
             exp->resetFrom(decoder);
@@ -717,6 +723,9 @@ std::ostream& operator<<(std::ostream& os, Expression::Kind kind) {
             break;
         case Expression::Kind::kLabel:
             os << "Label";
+            break;
+        case Expression::Kind::kParam:
+            os << "Parameter";
             break;
         case Expression::Kind::kCase:
             os << "Case";

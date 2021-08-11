@@ -23,6 +23,7 @@ nebula_add_library(
     AttributeExpression.cpp
     LabelAttributeExpression.cpp
     LabelExpression.cpp
+    ParameterExpression.cpp
     VertexExpression.cpp
     EdgeExpression.cpp
     CaseExpression.cpp

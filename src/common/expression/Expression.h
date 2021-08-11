@@ -87,6 +87,7 @@ public:
         kMap,
 
         kLabel,
+        kParam,
 
         kCase,
 

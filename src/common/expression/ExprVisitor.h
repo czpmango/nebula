@@ -19,6 +19,7 @@
 #include "common/expression/AggregateExpression.h"
 #include "common/expression/LabelAttributeExpression.h"
 #include "common/expression/LabelExpression.h"
+#include "common/expression/ParameterExpression.h"
 #include "common/expression/LogicalExpression.h"
 #include "common/expression/PathBuildExpression.h"
 #include "common/expression/PropertyExpression.h"
@@ -45,6 +46,8 @@ public:
     virtual void visit(UnaryExpression *expr) = 0;
     virtual void visit(TypeCastingExpression *expr) = 0;
     virtual void visit(LabelExpression *expr) = 0;
+    void visit(ParameterExpression *) {}
+    // virtual void visit(ParameterExpression *){}
     virtual void visit(LabelAttributeExpression *expr) = 0;
     // binary expression
     virtual void visit(ArithmeticExpression *expr) = 0;

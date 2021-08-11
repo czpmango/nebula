@@ -569,6 +569,7 @@ QueryBaseProcessor<REQ, RESP>::checkExp(const Expression* exp,
         case Expression::Kind::kVertex:
         case Expression::Kind::kEdge:
         case Expression::Kind::kLabel:
+        case Expression::Kind::kParam:
         case Expression::Kind::kVarProperty:
         case Expression::Kind::kDstProperty:
         case Expression::Kind::kUUID:
