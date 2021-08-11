@@ -11,6 +11,7 @@
 
 #include "graph/context/ExecutionContext.h"
 #include "graph/context/Iterator.h"
+#include "graph/session/ClientSession.h"
 
 namespace nebula {
 namespace graph {
@@ -67,12 +68,26 @@ public:
         return *this;
     }
 
+    void setSession(std::shared_ptr<ClientSession> session) {
+        session_ = std::move(session);
+        if (session_ != nullptr) {
+            // keep the session active
+            session_->charge();
+        }
+    }
+
+    ClientSession* session() const {
+        return session_.get();
+    }
+
 private:
     // ExecutionContext and Iterator are used for getting runtime results,
     // and nullptr is acceptable for these two members if the expressions
     // could be evaluated as constant value.
     ExecutionContext*                 ectx_{nullptr};
     Iterator*                         iter_{nullptr};
+
+    std::shared_ptr<ClientSession>              session_;
 };
 
 }  // namespace graph
