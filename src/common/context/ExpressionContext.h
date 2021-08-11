@@ -75,6 +75,11 @@ public:
 
     virtual void setVar(const std::string& var, Value val) = 0;
 
+    virtual const Value getParameter(const std::string) {
+        // TODO: implement in other ExpressionContext(such as StorageExpressionContext)
+        return Value::kNullValue;
+    }
+
 private:
     std::unordered_map<std::string, std::regex> regex_;
 };

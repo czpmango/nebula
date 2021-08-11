@@ -80,6 +80,12 @@ public:
         return session_.get();
     }
 
+    const Value getParameter(const std::string param) override {
+        auto& paramsMap = session_->paramsMap();
+        // TODO: check existence
+        return const_cast<std::unordered_map<std::string, Value>&>(paramsMap)[param];
+    }
+
 private:
     // ExecutionContext and Iterator are used for getting runtime results,
     // and nullptr is acceptable for these two members if the expressions
@@ -87,7 +93,8 @@ private:
     ExecutionContext*                 ectx_{nullptr};
     Iterator*                         iter_{nullptr};
 
-    std::shared_ptr<ClientSession>              session_;
+    // only for cypher parameter
+    std::shared_ptr<ClientSession>    session_;
 };
 
 }  // namespace graph

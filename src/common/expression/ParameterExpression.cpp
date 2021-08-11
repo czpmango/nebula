@@ -9,8 +9,10 @@
 
 namespace nebula {
 
-const Value& ParameterExpression::eval(ExpressionContext&) {
+const Value& ParameterExpression::eval(ExpressionContext& ectx) {
     // TODO : get param from session context  (czp)
+    // TBD : check existence
+    result_ = ectx.getParameter(name_);
     return result_;
 }
 

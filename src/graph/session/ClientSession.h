@@ -130,6 +130,10 @@ public:
         session_.set_space_name(spaceName);
     }
 
+    const std::unordered_map<std::string, Value>& paramsMap() {
+        return paramsMap_;
+    }
+
     void addQuery(QueryContext* qctx);
 
     void deleteQuery(QueryContext* qctx);
@@ -158,6 +162,9 @@ private:
      */
     std::unordered_map<GraphSpaceID, meta::cpp2::RoleType> roles_;
     std::unordered_map<ExecutionPlanID, QueryContext*> contexts_;
+
+    // for cypher parameter
+    std::unordered_map<std::string, Value> paramsMap_;
 };
 
 }  // namespace graph
