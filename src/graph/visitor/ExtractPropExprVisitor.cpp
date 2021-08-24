@@ -37,6 +37,10 @@ void ExtractPropExprVisitor::visit(VariableExpression* expr) {
     UNUSED(expr);
 }
 
+void ExtractPropExprVisitor::visit(ParameterExpression* expr) {
+    UNUSED(expr);
+}
+
 void ExtractPropExprVisitor::visit(SubscriptExpression* expr) {
     reportError(expr);
 }

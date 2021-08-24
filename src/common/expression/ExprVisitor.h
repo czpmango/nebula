@@ -19,6 +19,7 @@
 #include "common/expression/AggregateExpression.h"
 #include "common/expression/LabelAttributeExpression.h"
 #include "common/expression/LabelExpression.h"
+#include "common/expression/ParameterExpression.h"
 #include "common/expression/LogicalExpression.h"
 #include "common/expression/PathBuildExpression.h"
 #include "common/expression/PropertyExpression.h"
@@ -91,6 +92,8 @@ public:
     virtual void visit(ReduceExpression *expr) = 0;
     // subscript range expression
     virtual void visit(SubscriptRangeExpression *expr) = 0;
+    // parameter expression
+    virtual void visit(ParameterExpression *expr) = 0;
 };
 
 }   // namespace nebula

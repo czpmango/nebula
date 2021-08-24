@@ -48,6 +48,7 @@ private:
     void visit(LogicalExpression *) override;
     void visit(ColumnExpression *) override;
     void visit(SubscriptRangeExpression *) override;
+    void visit(ParameterExpression *) override;
 
 private:
     ObjectPool *pool_;

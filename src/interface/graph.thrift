@@ -104,8 +104,9 @@ service GraphService {
 
     oneway void signout(1: i64 sessionId)
 
-    ExecutionResponse execute(1: i64 sessionId, 2: binary stmt)
+    ExecutionResponse execute(1: i64 sessionId, 2: binary stmt, 3: map<binary, common.Value>(cpp.template = "std::unordered_map") parameterMap)
+    // ExecutionResponse execute(1: i64 sessionId, 2: binary stmt)
 
     // Same as execute(), but response will be a json string
-    binary executeJson(1: i64 sessionId, 2: binary stmt)
+    binary executeJson(1: i64 sessionId, 2: binary stmt, 3: map<binary, common.Value>(cpp.template = "std::unordered_map") parameterMap)
 }

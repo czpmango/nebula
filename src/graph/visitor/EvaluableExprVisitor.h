@@ -29,6 +29,11 @@ private:
         isEvaluable_ = false;
     }
 
+    void visit(ParameterExpression *) override {
+        // TODO: ParameterExpression is evaluable but not foldable (czp)
+        isEvaluable_ = false;
+    }
+
     void visit(UUIDExpression *) override {
         isEvaluable_ = false;
     }

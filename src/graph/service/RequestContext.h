@@ -89,9 +89,18 @@ public:
         return sessionMgr_;
     }
 
+    void setParameterMap(std::unordered_map<std::string, Value> parameterMap) {
+        parameterMap_ = parameterMap;
+    }
+
+    const std::unordered_map<std::string, Value> parameterMap() const {
+        return parameterMap_;
+    }
+
 private:
     time::Duration                              duration_;
     std::string                                 query_;
+    std::unordered_map<std::string, Value>      parameterMap_;
     Response                                    resp_;
     folly::Promise<Response>                    promise_;
     std::shared_ptr<ClientSession>              session_;

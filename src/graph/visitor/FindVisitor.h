@@ -66,6 +66,7 @@ private:
     void visit(EdgeDstIdExpression* expr) override;
     void visit(UUIDExpression* expr) override;
     void visit(VariableExpression* expr) override;
+    void visit(ParameterExpression* expr) override;
     void visit(VersionedVariableExpression* expr) override;
     void visit(LabelExpression* expr) override;
     void visit(LabelAttributeExpression* expr) override;

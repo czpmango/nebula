@@ -108,6 +108,7 @@ public:
         kIsNotEmpty,
 
         kSubscriptRange,
+        kParam,
     };
 
 

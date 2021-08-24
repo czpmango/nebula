@@ -282,6 +282,11 @@ void FoldConstantExprVisitor::visit(DestPropertyExpression *expr) {
     canBeFolded_ = false;
 }
 
+void FoldConstantExprVisitor::visit(ParameterExpression *expr) {
+    UNUSED(expr);
+    canBeFolded_ = false;
+}
+
 void FoldConstantExprVisitor::visit(SourcePropertyExpression *expr) {
     UNUSED(expr);
     canBeFolded_ = false;

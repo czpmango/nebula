@@ -60,6 +60,8 @@ private:
     // variable expression
     void visit(VariableExpression *expr) override;
     void visit(VersionedVariableExpression *expr) override;
+    // parameter expression
+    void visit(ParameterExpression *expr) override;
     // container expression
     void visit(ListExpression *expr) override;
     void visit(SetExpression *expr) override;

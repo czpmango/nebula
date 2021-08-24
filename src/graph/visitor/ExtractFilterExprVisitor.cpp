@@ -13,6 +13,11 @@ void ExtractFilterExprVisitor::visit(ConstantExpression *) {
     canBePushed_ = true;
 }
 
+void ExtractFilterExprVisitor::visit(ParameterExpression *) {
+    // TODO: fix optRule related (czp)
+    canBePushed_ = true;
+}
+
 void ExtractFilterExprVisitor::visit(LabelExpression *) {
     canBePushed_ = false;
 }

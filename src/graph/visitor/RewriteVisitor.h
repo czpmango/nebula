@@ -92,6 +92,7 @@ private:
     void visit(VertexExpression*) override {}
     void visit(EdgeExpression*) override {}
     void visit(ColumnExpression*) override {}
+    void visit(ParameterExpression*) override {}
 
     void visitBinaryExpr(BinaryExpression *) override;
     bool care(Expression::Kind kind);

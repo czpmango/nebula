@@ -43,6 +43,7 @@
 #include "common/expression/UnaryExpression.h"
 #include "common/expression/VariableExpression.h"
 #include "common/expression/VertexExpression.h"
+#include "common/expression/ParameterExpression.h"
 #include "common/expression/test/ExpressionContextMock.h"
 
 nebula::ExpressionContextMock gExpCtxt;

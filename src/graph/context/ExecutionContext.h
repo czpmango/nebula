@@ -58,7 +58,7 @@ public:
     // and the back is the oldest value
     const std::vector<Result>& getHistory(const std::string& name) const;
 
-    void setValue(const std::string& name, Value&& val);
+    void setValue(const std::string& name, Value val);
 
     void setResult(const std::string& name, Result&& result);
 

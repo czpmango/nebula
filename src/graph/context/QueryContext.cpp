@@ -32,6 +32,14 @@ void QueryContext::init() {
     objPool_ = std::make_unique<ObjectPool>();
     ep_ = std::make_unique<ExecutionPlan>();
     ectx_ = std::make_unique<ExecutionContext>();
+    // copy parameterMap into ExecutionContext
+    std::unordered_map<std::string, Value> paramMap;
+    if (rctx_) {
+        paramMap = rctx_->parameterMap();
+    }
+    for (auto item : paramMap) {
+       ectx_->setValue(item.first, item.second);
+    }
     idGen_ = std::make_unique<IdGenerator>(0);
     symTable_ = std::make_unique<SymbolTable>(objPool_.get());
     vctx_ = std::make_unique<ValidateContext>(std::make_unique<AnonVarGenerator>(symTable_.get()));

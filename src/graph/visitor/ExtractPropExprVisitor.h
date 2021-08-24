@@ -62,6 +62,7 @@ private:
     void visit(SubscriptExpression *) override;
     // column expression
     void visit(ColumnExpression *) override;
+    void visit(ParameterExpression *) override;
 
     void visitVertexEdgePropExpr(PropertyExpression *);
     void visitPropertyExpr(PropertyExpression *);

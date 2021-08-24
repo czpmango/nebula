@@ -115,6 +115,10 @@ void DeduceTypeVisitor::visit(ConstantExpression *expr) {
     type_ = expr->eval(ctx(nullptr)).type();
 }
 
+void DeduceTypeVisitor::visit(ParameterExpression *) {
+    // TODO: impl deduce parameter type (czp)
+}
+
 void DeduceTypeVisitor::visit(UnaryExpression *expr) {
     expr->operand()->accept(this);
     if (!ok()) return;

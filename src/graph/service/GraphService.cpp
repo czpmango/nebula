@@ -121,7 +121,9 @@ void GraphService::signout(int64_t sessionId) {
 
 
 folly::Future<ExecutionResponse>
-GraphService::future_execute(int64_t sessionId, const std::string& query) {
+GraphService::future_execute(int64_t sessionId, const std::string& query
+, const std::unordered_map<std::string, Value>& parameterMap
+) {
     auto ctx = std::make_unique<RequestContext<ExecutionResponse>>();
     ctx->setQuery(query);
     ctx->setRunner(getThreadManager());
@@ -135,7 +137,9 @@ GraphService::future_execute(int64_t sessionId, const std::string& query) {
         ctx->finish();
         return future;
     }
-    auto cb = [this, sessionId, ctx = std::move(ctx)]
+    auto cb = [this, sessionId, ctx = std::move(ctx)
+    , parameterMap = std::move(parameterMap)
+    ]
             (StatusOr<std::shared_ptr<ClientSession>> ret) mutable {
         if (!ret.ok()) {
             LOG(ERROR) << "Get session for sessionId: " << sessionId
@@ -156,6 +160,7 @@ GraphService::future_execute(int64_t sessionId, const std::string& query) {
             return ctx->finish();
         }
         ctx->setSession(std::move(sessionPtr));
+        ctx->setParameterMap(parameterMap);
         queryEngine_->execute(std::move(ctx));
     };
     sessionManager_->findSession(sessionId, getThreadManager()).thenValue(std::move(cb));

@@ -173,6 +173,10 @@ void FindVisitor::visit(VariableExpression* expr) {
     findInCurrentExpr(expr);
 }
 
+void FindVisitor::visit(ParameterExpression* expr) {
+    findInCurrentExpr(expr);
+}
+
 void FindVisitor::visit(VersionedVariableExpression* expr) {
     findInCurrentExpr(expr);
 }
