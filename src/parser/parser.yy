@@ -535,7 +535,11 @@ expression
         delete $1;
     }
     | VARIABLE {
-        $$ = VariableExpression::make(qctx->objPool(), *$1);
+        if (qctx->existParameter(*$1)) {
+            $$ = ParameterExpression::make(qctx->objPool(), *$1);
+        } else {
+            $$ = VariableExpression::make(qctx->objPool(), *$1);
+        }
         delete $1;
     }
     | compound_expression {
@@ -2610,7 +2614,11 @@ set_sentence
 
 assignment_sentence
     : VARIABLE ASSIGN set_sentence {
-        $$ = new AssignmentSentence($1, $3);
+        if (qctx->existParameter(*$1)) {
+            throw nebula::GraphParser::syntax_error(@1, "Variable definition conflicts with a parameter");
+        } else {
+            $$ = new AssignmentSentence($1, $3);
+        }
     }
     ;
 

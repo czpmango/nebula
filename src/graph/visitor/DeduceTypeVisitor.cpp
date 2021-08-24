@@ -116,6 +116,11 @@ void DeduceTypeVisitor::visit(ConstantExpression *expr) {
   type_ = expr->eval(ctx(nullptr)).type();
 }
 
+void DeduceTypeVisitor::visit(ParameterExpression *expr) {
+  QueryExpressionContext ctx(qctx_->ectx());
+  type_ = expr->eval(ctx()).type();
+}
+
 void DeduceTypeVisitor::visit(UnaryExpression *expr) {
   expr->operand()->accept(this);
   if (!ok()) return;
