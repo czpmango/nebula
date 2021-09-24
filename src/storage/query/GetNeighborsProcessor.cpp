@@ -72,6 +72,10 @@ void GetNeighborsProcessor::doProcess(const cpp2::GetNeighborsRequest& req) {
 void GetNeighborsProcessor::runInSingleThread(const cpp2::GetNeighborsRequest& req,
                                               int64_t limit,
                                               bool random) {
+  // TBD: add this DCHECK ??  (czp)
+  DCHECK(contexts_.empty());
+  DCHECK(expCtxs_.empty());
+
   contexts_.emplace_back(RuntimeContext(planContext_.get()));
   expCtxs_.emplace_back(StorageExpressionContext(spaceVidLen_, isIntId_));
   auto plan = buildPlan(&contexts_.front(), &expCtxs_.front(), &resultDataSet_, limit, random);
