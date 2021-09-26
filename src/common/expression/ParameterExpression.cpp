@@ -12,7 +12,7 @@ namespace nebula {
 
 const Value& ParameterExpression::eval(ExpressionContext& ectx) { return ectx.getParameter(name_); }
 
-std::string ParameterExpression::toString() const { return name_; }
+std::string ParameterExpression::toString() const { return "$" + name_; }
 
 bool ParameterExpression::operator==(const Expression& rhs) const {
   return kind_ == rhs.kind() && name_ == rhs.toString();

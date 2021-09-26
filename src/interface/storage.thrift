@@ -661,6 +661,8 @@ service GraphStorageService {
 
     // Interfaces for edge and vertex index scan
     LookupIndexResp lookupIndex(1: LookupIndexRequest req);
+    // LookupIndexResp lookupIndex(1: LookupIndexRequest req, 2: map<binary, common.Value>(cpp.template = "std::unordered_map") parameterMap);
+
 
     GetNeighborsResponse lookupAndTraverse(1: LookupAndTraverseRequest req);
     ExecResponse addEdgesAtomic(1: AddEdgesRequest req);

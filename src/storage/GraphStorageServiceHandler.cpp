@@ -120,7 +120,7 @@ folly::Future<cpp2::GetPropResponse> GraphStorageServiceHandler::future_getProps
 }
 
 folly::Future<cpp2::LookupIndexResp> GraphStorageServiceHandler::future_lookupIndex(
-    const cpp2::LookupIndexRequest& req) {
+    const cpp2::LookupIndexRequest& req, std::unordered_map<std::string, Value> paramMap) {
   auto* processor = LookupProcessor::instance(env_, &kLookupCounters, readerPool_.get());
   RETURN_FUTURE(processor);
 }

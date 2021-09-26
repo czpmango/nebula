@@ -199,9 +199,12 @@ StatusOr<Expression*> LookupValidator::rewriteRelExpr(RelationalExpression* expr
 
   std::string prop = la->right()->value().getStr();
   auto relExprType = expr->kind();
-  auto c = checkConstExpr(expr->right(), prop, relExprType);
+  auto* rExpr = expr->right();
+  auto c = checkConstExpr(rExpr, prop, relExprType);
   NG_RETURN_IF_ERROR(c);
-  expr->setRight(ConstantExpression::make(pool, std::move(c).value()));
+  if (!ExpressionUtils::findAny(rExpr, {Expression::Kind::kParam})) {
+    expr->setRight(ConstantExpression::make(pool, std::move(c).value()));
+  }
 
   // rewrite PropertyExpression
   if (lookupCtx_->isEdge) {
@@ -225,7 +228,7 @@ StatusOr<Value> LookupValidator::checkConstExpr(Expression* expr,
   if (type == meta::cpp2::PropertyType::UNKNOWN) {
     return Status::SemanticError("Invalid column: %s", prop.c_str());
   }
-  QueryExpressionContext dummy(nullptr);
+  QueryExpressionContext dummy(qctx_->ectx());
   auto v = Expression::eval(expr, dummy);
   // TODO(Aiee) extract the type cast logic as a method if we decide to support
   // more cross-type comparisons.
@@ -248,11 +251,14 @@ StatusOr<Value> LookupValidator::checkConstExpr(Expression* expr,
     return iFloor;
   }
 
-  if (v.type() != SchemaUtil::propTypeToValueType(type)) {
-    // allow diffrent types in the IN expression, such as "abc" IN ["abc"]
-    if (v.type() != Value::Type::LIST) {
-      return Status::SemanticError("Column type error : %s", prop.c_str());
-    }
+  auto propType = SchemaUtil::propTypeToValueType(type);
+  auto vType = v.type();
+  // allow diffrent types in the IN expression, such as "abc" IN ["abc"]
+  if (vType != propType && vType != Value::Type::LIST) {
+    std::stringstream ss;
+    ss << "Column(" << prop.c_str() << ") type mismatch: expected " << propType << " but was "
+       << vType << ".";
+    return Status::SemanticError(ss.str());
   }
   return v;
 }
