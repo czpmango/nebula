@@ -143,6 +143,17 @@ class GraphStorageClient : public StorageClientBase<cpp2::GraphStorageServiceAsy
       const std::vector<std::string>& returnCols,
       folly::EventBase* evb = nullptr);
 
+  folly::SemiFuture<StorageRpcResponse<cpp2::LookupIndexResp>> lookupIndexWithParameter(
+      GraphSpaceID space,
+      SessionID session,
+      ExecutionPlanID plan,
+      const std::vector<storage::cpp2::IndexQueryContext>& contexts,
+      bool isEdge,
+      int32_t tagOrEdge,
+      const std::vector<std::string>& returnCols,
+      folly::EventBase* evb = nullptr,
+      const std::unordered_map<::std::string, nebula::Value>& paramMap = {});
+
   folly::SemiFuture<StorageRpcResponse<cpp2::GetNeighborsResponse>> lookupAndTraverse(
       GraphSpaceID space,
       SessionID session,

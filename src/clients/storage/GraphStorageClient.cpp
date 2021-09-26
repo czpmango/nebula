@@ -483,7 +483,8 @@ folly::Future<StatusOr<cpp2::GetUUIDResp>> GraphStorageClient::getUUID(GraphSpac
                      });
 }
 
-folly::SemiFuture<StorageRpcResponse<cpp2::LookupIndexResp>> GraphStorageClient::lookupIndex(
+folly::SemiFuture<StorageRpcResponse<cpp2::LookupIndexResp>>
+GraphStorageClient::lookupIndexWithParameter(
     GraphSpaceID space,
     SessionID session,
     ExecutionPlanID plan,
@@ -491,7 +492,8 @@ folly::SemiFuture<StorageRpcResponse<cpp2::LookupIndexResp>> GraphStorageClient:
     bool isEdge,
     int32_t tagOrEdge,
     const std::vector<std::string>& returnCols,
-    folly::EventBase* evb) {
+    folly::EventBase* evb,
+    const std::unordered_map<::std::string, nebula::Value>& paramMap) {
   // TODO(sky) : instead of isEdge and tagOrEdge to nebula::cpp2::SchemaID for graph layer.
   auto status = getHostParts(space);
   if (!status.ok()) {
@@ -521,13 +523,25 @@ folly::SemiFuture<StorageRpcResponse<cpp2::LookupIndexResp>> GraphStorageClient:
     req.set_indices(spec);
     req.set_common(common);
   }
-
+  UNUSED(paramMap);
   return collectResponse(
       evb,
       std::move(requests),
       [](cpp2::GraphStorageServiceAsyncClient* client, const cpp2::LookupIndexRequest& r) {
         return client->future_lookupIndex(r);
       });
+}
+folly::SemiFuture<StorageRpcResponse<cpp2::LookupIndexResp>> GraphStorageClient::lookupIndex(
+    GraphSpaceID space,
+    SessionID session,
+    ExecutionPlanID plan,
+    const std::vector<storage::cpp2::IndexQueryContext>& contexts,
+    bool isEdge,
+    int32_t tagOrEdge,
+    const std::vector<std::string>& returnCols,
+    folly::EventBase* evb) {
+  return lookupIndexWithParameter(
+      space, session, plan, contexts, isEdge, tagOrEdge, returnCols, evb, {});
 }
 
 folly::SemiFuture<StorageRpcResponse<cpp2::GetNeighborsResponse>>
