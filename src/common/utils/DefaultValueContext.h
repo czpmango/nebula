@@ -14,6 +14,9 @@
 namespace nebula {
 class DefaultValueContext final : public ExpressionContext {
  public:
+  explicit DefaultValueContext(std::unordered_map<std::string, Value> paramMap = {})
+      : ExpressionContext(paramMap) {}
+
   const Value& getVar(const std::string&) const override {
     LOG(FATAL) << "Not allowed to call";
     return Value::kEmpty;

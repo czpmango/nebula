@@ -97,7 +97,7 @@ class QueryContext {
 
   bool isKilled() const { return killed_.load(); }
 
-  bool existParameter(const std::string& param) const { return ectx_->exist(param); }
+  bool existParameter(const std::string& param) const { return ectx_->existParameter(param); }
 
  private:
   void init();

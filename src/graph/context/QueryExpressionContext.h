@@ -16,10 +16,16 @@ namespace graph {
 
 class QueryExpressionContext final : public ExpressionContext {
  public:
-  explicit QueryExpressionContext(ExecutionContext* ectx = nullptr) { ectx_ = ectx; }
+  explicit QueryExpressionContext(ExecutionContext* ectx = nullptr)
+      : ExpressionContext(ectx ? std::move(ectx->parameterMap())
+                               : std::unordered_map<std::string, Value>()) {
+    ectx_ = ectx;
+  }
 
   // Get the latest version value for the given variable name, such as $a, $b
   const Value& getVar(const std::string& var) const override;
+
+  const Value& getParameter(const std::string& param) const override;
 
   // Get the given version value for the given variable name, such as $a, $b
   const Value& getVersionedVar(const std::string& var, int64_t version) const override;

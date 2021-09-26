@@ -32,9 +32,10 @@ void QueryContext::init() {
   ectx_ = std::make_unique<ExecutionContext>();
   // copy parameterMap into ExecutionContext
   if (rctx_) {
-    for (auto item : rctx_->parameterMap()) {
-      ectx_->setValue(std::move(item.first), std::move(item.second));
-    }
+    ectx_->setParameterMap(rctx_->parameterMap());
+    // for (auto item : rctx_->parameterMap()) {
+    //   ectx_->setValue(std::move(item.first), std::move(item.second));
+    // }
   }
   idGen_ = std::make_unique<IdGenerator>(0);
   symTable_ = std::make_unique<SymbolTable>(objPool_.get());

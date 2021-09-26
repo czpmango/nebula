@@ -24,6 +24,9 @@ namespace nebula {
  **************************************************************************/
 class ExpressionContext {
  public:
+  explicit ExpressionContext(std::unordered_map<std::string, Value> params = {}) {
+    paramMap_ = std::move(params);
+  }
   virtual ~ExpressionContext() = default;
 
   // Get the latest version value for the given variable name, such as $a, $b
@@ -72,8 +75,25 @@ class ExpressionContext {
 
   virtual void setVar(const std::string& var, Value val) = 0;
 
+  virtual const Value& getParameter(const std::string& param) const {
+    auto it = paramMap_.find(param);
+    if (it != paramMap_.end()) {
+      return it->second;
+    } else {
+      return Value::kEmpty;
+    }
+  }
+
+  const std::unordered_map<std::string, Value>& parameterMap() const { return paramMap_; }
+
+  void setParameterMap(std::unordered_map<std::string, Value> params) {
+    paramMap_ = std::move(params);
+  }
+
  private:
   std::unordered_map<std::string, std::regex> regex_;
+  // parameters map
+  std::unordered_map<std::string, Value> paramMap_;
 };
 
 }  // namespace nebula

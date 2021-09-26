@@ -85,5 +85,21 @@ const std::vector<Result>& ExecutionContext::getHistory(const std::string& name)
   }
 }
 
+const std::unordered_map<std::string, Value>& ExecutionContext::parameterMap() const {
+  return paramMap_;
+}
+
+void ExecutionContext::setParameterMap(std::unordered_map<std::string, Value> params) {
+  paramMap_ = std::move(params);
+}
+
+const Value& ExecutionContext::getParameter(const std::string& name) const {
+  auto it = paramMap_.find(name);
+  if (it != paramMap_.end()) {
+    return it->second;
+  } else {
+    return Value::kEmpty;
+  }
+}
 }  // namespace graph
 }  // namespace nebula

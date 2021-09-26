@@ -10,7 +10,7 @@
 
 namespace nebula {
 
-const Value& ParameterExpression::eval(ExpressionContext& ectx) { return ectx.getVar(name_); }
+const Value& ParameterExpression::eval(ExpressionContext& ectx) { return ectx.getParameter(name_); }
 
 std::string ParameterExpression::toString() const { return name_; }
 

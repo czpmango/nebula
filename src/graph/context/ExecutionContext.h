@@ -67,12 +67,24 @@ class ExecutionContext {
 
   bool exist(const std::string& name) const { return valueMap_.find(name) != valueMap_.end(); }
 
+  bool existParameter(const std::string& name) const {
+    return paramMap_.find(name) != paramMap_.end();
+  }
+
+  const Value& getParameter(const std::string& name) const;
+
+  const std::unordered_map<std::string, Value>& parameterMap() const;
+
+  void setParameterMap(std::unordered_map<std::string, Value> params);
+
  private:
   friend class QueryInstance;
   Value moveValue(const std::string& name);
 
   // name -> Value with multiple versions
   std::unordered_map<std::string, std::vector<Result>> valueMap_;
+  // parameters map
+  std::unordered_map<std::string, Value> paramMap_;
 };
 
 }  // namespace graph

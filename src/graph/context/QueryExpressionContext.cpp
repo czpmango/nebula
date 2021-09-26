@@ -15,6 +15,13 @@ const Value& QueryExpressionContext::getVar(const std::string& var) const {
   return ectx_->getValue(var);
 }
 
+const Value& QueryExpressionContext::getParameter(const std::string& param) const {
+  if (ectx_ == nullptr) {
+    return Value::kEmpty;
+  }
+  return ectx_->getParameter(param);
+}
+
 const Value& QueryExpressionContext::getVersionedVar(const std::string& var,
                                                      int64_t version) const {
   if (ectx_ == nullptr) {

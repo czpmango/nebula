@@ -31,7 +31,7 @@ class EvaluableExprVisitor : public ExprVisitorImpl {
 
   void visit(ParameterExpression *) override {
     // TODO: ParameterExpression is evaluable but not foldable (czp)
-    isEvaluable_ = false;
+    isEvaluable_ = true;
   }
 
   void visit(TagPropertyExpression *) override { isEvaluable_ = false; }

@@ -35,14 +35,26 @@ class StorageExpressionContext final : public ExpressionContext {
                                     bool isIntId,
                                     const std::string& name = "",
                                     const meta::NebulaSchemaProvider* schema = nullptr,
-                                    bool isEdge = false)
-      : vIdLen_(vIdLen), isIntId_(isIntId), name_(name), schema_(schema), isEdge_(isEdge) {}
+                                    bool isEdge = false,
+                                    std::unordered_map<std::string, Value> paramMap = {})
+      : ExpressionContext(paramMap) {
+    vIdLen_ = vIdLen;
+    isIntId_ = isIntId;
+    name_ = name;
+    schema_ = schema;
+    isEdge_ = isEdge;
+  }
 
   StorageExpressionContext(size_t vIdLen,
                            bool isIntId,
                            bool hasNullableCol,
-                           const std::vector<meta::cpp2::ColumnDef>& fields)
-      : vIdLen_(vIdLen), isIntId_(isIntId), hasNullableCol_(hasNullableCol), fields_(fields) {
+                           const std::vector<meta::cpp2::ColumnDef>& fields,
+                           std::unordered_map<std::string, Value> paramMap = {})
+      : ExpressionContext(paramMap) {
+    vIdLen_ = vIdLen;
+    isIntId_ = isIntId;
+    hasNullableCol_ = hasNullableCol;
+    fields_ = fields;
     isIndex_ = true;
   }
 
