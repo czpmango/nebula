@@ -117,8 +117,18 @@ class ExpressionContextMock final : public ExpressionContext {
     }
   }
 
+  virtual const Value& getParameter(const std::string& param) const {
+    auto it = paramMap_.find(param);
+    if (it != paramMap_.end()) {
+      return it->second;
+    } else {
+      return Value::kEmpty;
+    }
+  }
+
  private:
   static std::unordered_map<std::string, Value> vals_;
   std::unordered_map<std::string, std::regex> regex_;
+  static std::unordered_map<std::string, Value> paramMap_;
 };
 }  // namespace nebula

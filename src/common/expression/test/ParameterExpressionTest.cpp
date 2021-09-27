@@ -10,7 +10,7 @@ namespace nebula {
 class ParameterExpressionTest : public ExpressionTest {};
 
 TEST_F(ParameterExpressionTest, ParamExprToString) {
-  auto expr = ParameterExpression::make(&pool, "$param1");
+  auto expr = ParameterExpression::make(&pool, "param1");
   ASSERT_EQ("$param1", expr->toString());
 }
 

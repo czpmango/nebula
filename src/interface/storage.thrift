@@ -506,6 +506,8 @@ struct IndexColumnHint {
     2: ScanType                 scan_type,
     3: common.Value             begin_value,
     4: common.Value             end_value,
+    5: binary                   begin_expr,
+    6: binary                   end_expr,
 }
 
 struct IndexQueryContext {
