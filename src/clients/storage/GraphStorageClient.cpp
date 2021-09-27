@@ -493,7 +493,7 @@ GraphStorageClient::lookupIndexWithParameter(
     int32_t tagOrEdge,
     const std::vector<std::string>& returnCols,
     folly::EventBase* evb,
-    const std::unordered_map<::std::string, nebula::Value>& paramMap) {
+    const std::unordered_map<std::string, Value>& paramMap) {
   // TODO(sky) : instead of isEdge and tagOrEdge to nebula::cpp2::SchemaID for graph layer.
   auto status = getHostParts(space);
   if (!status.ok()) {
@@ -523,12 +523,12 @@ GraphStorageClient::lookupIndexWithParameter(
     req.set_indices(spec);
     req.set_common(common);
   }
-  UNUSED(paramMap);
+
   return collectResponse(
       evb,
       std::move(requests),
-      [](cpp2::GraphStorageServiceAsyncClient* client, const cpp2::LookupIndexRequest& r) {
-        return client->future_lookupIndex(r);
+      [&paramMap](cpp2::GraphStorageServiceAsyncClient* client, const cpp2::LookupIndexRequest& r) {
+        return client->future_lookupIndexWithParameter(r, paramMap);
       });
 }
 folly::SemiFuture<StorageRpcResponse<cpp2::LookupIndexResp>> GraphStorageClient::lookupIndex(

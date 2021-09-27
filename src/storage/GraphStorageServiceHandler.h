@@ -52,6 +52,10 @@ class GraphStorageServiceHandler final : public cpp2::GraphStorageServiceSvIf {
   folly::Future<cpp2::LookupIndexResp> future_lookupIndex(
       const cpp2::LookupIndexRequest& req) override;
 
+  folly::Future<cpp2::LookupIndexResp> future_lookupIndexWithParameter(
+      const cpp2::LookupIndexRequest& req,
+      const std::unordered_map<std::string, Value>& paramMap) override;
+
   folly::Future<cpp2::ExecResponse> future_addEdgesAtomic(
       const cpp2::AddEdgesRequest& req) override;
 

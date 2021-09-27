@@ -230,7 +230,7 @@ StatusOr<StoragePlan<IndexID>> LookupBaseProcessor<REQ, RESP>::buildPlan(
     } else if (!needData && needFilter) {
       auto expr = Expression::decode(pool, ctx.get_filter());
       auto exprCtx = std::make_unique<StorageExpressionContext>(
-          context_->vIdLen(), context_->isIntId(), hasNullableCol, fields);
+          context_->vIdLen(), context_->isIntId(), hasNullableCol, fields, paramMap_);
       filterItem->emplace(filterId, std::make_pair(std::move(exprCtx), expr));
       out = buildPlanWithFilter(
           result, ctx, plan, (*filterItem)[filterId].first.get(), (*filterItem)[filterId].second);
@@ -246,7 +246,8 @@ StatusOr<StoragePlan<IndexID>> LookupBaseProcessor<REQ, RESP>::buildPlan(
                                                                 context_->isIntId(),
                                                                 schemaName,
                                                                 schemas_.back().get(),
-                                                                context_->isEdge());
+                                                                context_->isEdge(),
+                                                                paramMap_);
       filterItem->emplace(filterId, std::make_pair(std::move(exprCtx), expr));
       out = buildPlanWithDataAndFilter(
           result, ctx, plan, (*filterItem)[filterId].first.get(), (*filterItem)[filterId].second);

@@ -37,13 +37,15 @@ folly::Future<Status> IndexScanExecutor::indexScan() {
   }
 
   return storageClient
-      ->lookupIndex(lookup->space(),
-                    qctx()->rctx()->session()->id(),
-                    qctx()->plan()->id(),
-                    ictxs,
-                    lookup->isEdge(),
-                    lookup->schemaId(),
-                    lookup->returnColumns())
+      ->lookupIndexWithParameter(lookup->space(),
+                                 qctx()->rctx()->session()->id(),
+                                 qctx()->plan()->id(),
+                                 ictxs,
+                                 lookup->isEdge(),
+                                 lookup->schemaId(),
+                                 lookup->returnColumns(),
+                                 nullptr,
+                                 ectx_->parameterMap())
       .via(runner())
       .thenValue([this](StorageRpcResponse<LookupIndexResp> &&rpcResp) {
         addStats(rpcResp, otherStats_);

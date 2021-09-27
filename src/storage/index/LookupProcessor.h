@@ -20,16 +20,26 @@ class LookupProcessor
  public:
   static LookupProcessor* instance(StorageEnv* env,
                                    const ProcessorCounters* counters = &kLookupCounters,
-                                   folly::Executor* executor = nullptr) {
-    return new LookupProcessor(env, counters, executor);
+                                   folly::Executor* executor = nullptr,
+                                   std::unordered_map<std::string, Value> paramMap = {}) {
+    return new LookupProcessor(env, counters, executor, paramMap);
   }
 
   void process(const cpp2::LookupIndexRequest& req) override;
 
+  // const std::unordered_map<std::string, Value>& parameterMap() const { return paramMap_; }
+
+  // void setParameterMap(std::unordered_map<std::string, Value> params) {
+  //   paramMap_ = std::move(params);
+  // }
+
  protected:
-  LookupProcessor(StorageEnv* env, const ProcessorCounters* counters, folly::Executor* executor)
+  LookupProcessor(StorageEnv* env,
+                  const ProcessorCounters* counters,
+                  folly::Executor* executor,
+                  std::unordered_map<std::string, Value> paramMap = {})
       : LookupBaseProcessor<cpp2::LookupIndexRequest, cpp2::LookupIndexResp>(
-            env, counters, executor) {}
+            env, counters, executor, paramMap) {}
 
   void onProcessFinished() override;
 
@@ -41,6 +51,9 @@ class LookupProcessor
       IndexFilterItem* filterItem, nebula::DataSet* result, PartitionID partId);
 
   void doProcess(const cpp2::LookupIndexRequest& req);
+
+  //  private:
+  //   std::unordered_map<std::string, Value> paramMap_;
 };
 
 }  // namespace storage

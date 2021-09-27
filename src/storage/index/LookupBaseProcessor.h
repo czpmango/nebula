@@ -33,8 +33,9 @@ class LookupBaseProcessor : public BaseProcessor<RESP> {
  protected:
   LookupBaseProcessor(StorageEnv* env,
                       const ProcessorCounters* counters,
-                      folly::Executor* executor = nullptr)
-      : BaseProcessor<RESP>(env, counters), executor_(executor) {}
+                      folly::Executor* executor = nullptr,
+                      std::unordered_map<std::string, Value> paramMap = {})
+      : BaseProcessor<RESP>(env, counters), executor_(executor), paramMap_(paramMap) {}
 
   virtual void onProcessFinished() = 0;
 
@@ -70,6 +71,12 @@ class LookupBaseProcessor : public BaseProcessor<RESP> {
 
   void profilePlan(StoragePlan<IndexID>& plan);
 
+  const std::unordered_map<std::string, Value>& parameterMap() const { return paramMap_; }
+
+  void setParameterMap(std::unordered_map<std::string, Value> params) {
+    paramMap_ = std::move(params);
+  }
+
  protected:
   GraphSpaceID spaceId_;
   std::unique_ptr<PlanContext> planContext_;
@@ -84,6 +91,7 @@ class LookupBaseProcessor : public BaseProcessor<RESP> {
   std::vector<std::shared_ptr<const meta::NebulaSchemaProvider>> schemas_;
   std::vector<size_t> deDupColPos_;
   int64_t limit_ = -1;
+  std::unordered_map<std::string, Value> paramMap_;
 };
 
 }  // namespace storage
