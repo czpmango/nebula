@@ -270,6 +270,7 @@ std::string SchemaUtil::typeToString(const meta::cpp2::ColumnDef &col) {
   return str;
 }
 
+// TODO: delete this function
 Value::Type SchemaUtil::propTypeToValueType(meta::cpp2::PropertyType propType) {
   switch (propType) {
     case meta::cpp2::PropertyType::BOOL:

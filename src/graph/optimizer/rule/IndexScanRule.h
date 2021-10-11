@@ -55,6 +55,7 @@ class IndexScanRule final : public OptRule {
   // relOP_ : Relational operator , for example c1 > 1 , the relOP_ == kRelGT
   //                                            1 > c1 , the relOP_ == kRelLT
   // value_ : Constant value. from ConstantExpression.
+  // TODO: delete this
   struct FilterItem {
     std::string col_;
     RelationalExpression::Kind relOP_;
@@ -114,13 +115,9 @@ class IndexScanRule final : public OptRule {
 
   size_t hintCount(const FilterItems& items) const noexcept;
 
-  bool isEdge(const OptGroupNode* groupNode) const;
-
   int32_t schemaId(const OptGroupNode* groupNode) const;
 
   GraphSpaceID spaceId(const OptGroupNode* groupNode) const;
-
-  Expression* filterExpr(const OptGroupNode* groupNode) const;
 
   Status analyzeExpression(Expression* expr, FilterItems* items, ScanKind* kind, bool isEdge) const;
 
