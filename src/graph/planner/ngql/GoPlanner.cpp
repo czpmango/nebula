@@ -503,11 +503,10 @@ SubPlan GoPlanner::mToNStepsPlan(SubPlan& startVidPlan) {
     loopBody->setInputVar(filterInput);
   }
 
-  const auto& projectInput =
-      (loopBody != getDst) ? loopBody->outputVar() : sampleLimit->outputVar();
-  loopBody = Project::make(qctx, loopBody, goCtx_->yieldExpr);
-  loopBody->setInputVar(projectInput);
-  loopBody->setColNames(std::move(goCtx_->colNames));
+  auto proj = Project::make(qctx, loopBody, goCtx_->yieldExpr);
+  proj->setInputVar(loopBody->outputVar());
+  proj->setColNames(std::move(goCtx_->colNames));
+  loopBody = proj;
 
   if (goCtx_->distinct) {
     loopBody = Dedup::make(qctx, loopBody);
