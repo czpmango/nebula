@@ -34,6 +34,27 @@ void DropEdgeIndexProcessor::process(const cpp2::DropEdgeIndexReq& req) {
   }
 
   auto edgeIndexID = nebula::value(edgeIndexIDRet);
+  const auto& indexKey = MetaKeyUtils::indexKey(spaceID, edgeIndexID);
+  auto indexItemRet = doGet(indexKey);
+  if (!nebula::ok(indexItemRet)) {
+    auto retCode = nebula::error(indexItemRet);
+    if (retCode == nebula::cpp2::ErrorCode::E_KEY_NOT_FOUND) {
+      retCode = nebula::cpp2::ErrorCode::E_INDEX_NOT_FOUND;
+    }
+    LOG(ERROR) << "Get Edge Index Failed: SpaceID " << spaceID << " Index Name: " << indexName
+               << " error: " << apache::thrift::util::enumNameSafe(retCode);
+    handleErrorCode(retCode);
+    onFinished();
+    return;
+  }
+
+  auto item = MetaKeyUtils::parseIndex(nebula::value(indexItemRet));
+  if (item.get_schema_id().getType() != nebula::cpp2::SchemaID::Type::edge_type) {
+    LOG(ERROR) << "Get Edge Index Failed: Index Name " << indexName << " is not an Edge Index";
+    resp_.set_code(nebula::cpp2::ErrorCode::E_INDEX_NOT_FOUND);
+    onFinished();
+    return;
+  }
 
   std::vector<std::string> keys;
   keys.emplace_back(MetaKeyUtils::indexIndexKey(spaceID, indexName));

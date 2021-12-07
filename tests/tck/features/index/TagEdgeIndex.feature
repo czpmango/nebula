@@ -225,6 +225,11 @@ Feature: tag and edge index tests from pytest
       | "disorder_tag_index" | ["col3", "col2"] |
     When executing query:
       """
+      DROP EDGE INDEX single_tag_index
+      """
+    Then an ExecutionError should be raised at runtime.
+    When executing query:
+      """
       DROP TAG INDEX single_tag_index
       """
     Then the execution should be successful
@@ -426,6 +431,11 @@ Feature: tag and edge index tests from pytest
     Then the result should be, in any order:
       | Edge Index Name       | Create Edge Index                                                             |
       | 'disorder_edge_index' | 'CREATE EDGE INDEX `disorder_edge_index` ON `edge_1` (\n `col3`,\n `col2`\n)' |
+    When executing query:
+      """
+      DROP TAG INDEX disorder_edge_index
+      """
+    Then an ExecutionError should be raised at runtime.
     # Check if show create edge index works well
     When executing query:
       """
