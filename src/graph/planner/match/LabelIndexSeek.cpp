@@ -96,8 +96,7 @@ StatusOr<SubPlan> LabelIndexSeek::transformNode(NodeContext* nodeCtx) {
       bool matched = true;
       for (auto* expr : exprs) {
         auto tagPropExpr = static_cast<const LabelTagPropertyExpression*>(expr);
-        if (static_cast<const PropertyExpression*>(tagPropExpr->label())->prop() != nodeAlias ||
-            tagPropExpr->sym() != schemaName) {
+        if (tagPropExpr->label() != nodeAlias || tagPropExpr->sym() != schemaName) {
           matched = false;
           break;
         }

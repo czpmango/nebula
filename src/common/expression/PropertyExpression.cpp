@@ -175,7 +175,7 @@ std::string VariablePropertyExpression::toString() const {
 }
 
 const Value& LabelTagPropertyExpression::eval(ExpressionContext& ctx) {
-  const auto& var = label_->eval(ctx);
+  const auto& var = ctx.getVarProp("", label_);
   if (var.type() != Value::Type::VERTEX) {
     return Value::kNullBadType;
   }
@@ -195,8 +195,7 @@ void LabelTagPropertyExpression::accept(ExprVisitor* visitor) {
 }
 
 std::string LabelTagPropertyExpression::toString() const {
-  std::string labelStr = label_ != nullptr ? label_->toString().erase(0, 1) : "";
-  return labelStr + "." + sym_ + "." + prop_;
+  return label_ + "." + sym_ + "." + prop_;
 }
 
 bool LabelTagPropertyExpression::operator==(const Expression& rhs) const {
@@ -204,17 +203,17 @@ bool LabelTagPropertyExpression::operator==(const Expression& rhs) const {
     return false;
   }
   const auto& expr = static_cast<const LabelTagPropertyExpression&>(rhs);
-  return *label_ == *expr.label_ && sym_ == expr.sym_ && prop_ == expr.prop_;
+  return label_ == expr.label_ && sym_ == expr.sym_ && prop_ == expr.prop_;
 }
 
 void LabelTagPropertyExpression::writeTo(Encoder& encoder) const {
   PropertyExpression::writeTo(encoder);
-  encoder << *label_;
+  encoder << label_;
 }
 
 void LabelTagPropertyExpression::resetFrom(Decoder& decoder) {
   PropertyExpression::resetFrom(decoder);
-  label_ = decoder.readExpression(pool_);
+  label_ = decoder.readStr();
 }
 
 }  // namespace nebula

@@ -815,8 +815,8 @@ Status MatchValidator::checkAlias(
       return Status::OK();
     }
     case Expression::Kind::kLabelTagProperty: {
-      auto labelExpr = static_cast<const LabelTagPropertyExpression *>(refExpr)->label();
-      auto name = static_cast<const VariablePropertyExpression *>(labelExpr)->prop();
+      auto labelTagPropExpr = static_cast<const LabelTagPropertyExpression *>(refExpr);
+      auto name = labelTagPropExpr->label();
       auto res = getAliasType(aliasesAvailable, name);
       NG_RETURN_IF_ERROR(res);
       if (res.value() != AliasType::kNode) {

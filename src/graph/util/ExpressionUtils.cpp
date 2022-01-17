@@ -10,10 +10,12 @@
 #include <unordered_set>
 
 #include "common/base/ObjectPool.h"
+#include "common/base/Status.h"
 #include "common/expression/ArithmeticExpression.h"
 #include "common/expression/Expression.h"
 #include "common/expression/PropertyExpression.h"
 #include "common/function/AggFunctionManager.h"
+#include "common/thrift/ThriftTypes.h"
 #include "graph/context/QueryContext.h"
 #include "graph/context/QueryExpressionContext.h"
 #include "graph/visitor/FoldConstantExprVisitor.h"
@@ -147,8 +149,7 @@ Expression *ExpressionUtils::rewriteAttr2LabelTagProp(const Expression *expr) {
     auto tagExpr = const_cast<ConstantExpression *>(labelAttrExpr->right());
     auto propExpr = static_cast<const LabelExpression *>(attrExpr->right());
     QueryExpressionContext ctx(nullptr);
-    const auto &labelVal = labelExpr->eval(ctx);
-    auto label = VariablePropertyExpression::make(pool, "", labelVal.getStr());
+    const auto &label = labelExpr->name();
     const auto &tag = tagExpr->eval(ctx);
     const auto &prop = const_cast<LabelExpression *>(propExpr)->eval(ctx);
     return LabelTagPropertyExpression::make(pool, label, tag.getStr(), prop.getStr());
@@ -1048,6 +1049,48 @@ bool ExpressionUtils::isGeoIndexAcceleratedPredicate(const Expression *expr) {
   }
 
   return false;
+}
+
+Status ExpressionUtils::extractPropsFromExprs(const Expression *expr,
+                                              PropertyTracker &propsUsed,
+                                              const graph::QueryContext *qctx,
+                                              GraphSpaceID spaceID) {
+  auto exprs = ExpressionUtils::collectAll(expr,
+                                           {Expression::Kind::kLabelTagProperty,
+                                            Expression::Kind::kInputProperty,
+                                            Expression::Kind::kVarProperty});
+  for (auto *e : exprs) {
+    switch (e->kind()) {
+      case Expression::Kind::kLabelTagProperty: {
+        auto *labelTagPropExpr = static_cast<const LabelTagPropertyExpression *>(e);
+        auto &labelName = labelTagPropExpr->label();
+        auto &tagName = labelTagPropExpr->sym();
+        auto &propName = labelTagPropExpr->prop();
+        auto ret = qctx->schemaMng()->toTagID(spaceID, tagName);
+        NG_RETURN_IF_ERROR(ret);
+        auto tagId = ret.value();
+        propsUsed.vertexPropsMap[labelName][tagId].emplace(propName);
+        break;
+      }
+      case Expression::Kind::kInputProperty: {
+        auto *inputPropExpr = static_cast<const InputPropertyExpression *>(e);
+        auto &colName = inputPropExpr->prop();
+        propsUsed.colsSet.emplace(colName);
+        break;
+      }
+      case Expression::Kind::kVarProperty: {
+        auto *varPropExpr = static_cast<const VariablePropertyExpression *>(e);
+        auto &colName = varPropExpr->prop();
+        propsUsed.colsSet.emplace(colName);
+        break;
+      }
+      case Expression::Kind::kTagProperty:
+      // case Expression::Kind::kPathBuilding:
+      default:
+        break;
+    }
+  }
+  return Status::OK();
 }
 
 bool ExpressionUtils::checkExprDepth(const Expression *expr) {

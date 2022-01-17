@@ -129,7 +129,7 @@ class LabelTagPropertyExpression final : public PropertyExpression {
   LabelTagPropertyExpression& operator=(LabelTagPropertyExpression&&) = delete;
 
   static LabelTagPropertyExpression* make(ObjectPool* pool,
-                                          Expression* label = nullptr,
+                                          const std::string& label = "",
                                           const std::string& tag = "",
                                           const std::string& prop = "") {
     return pool->add(new LabelTagPropertyExpression(pool, label, tag, prop));
@@ -147,26 +147,22 @@ class LabelTagPropertyExpression final : public PropertyExpression {
     return LabelTagPropertyExpression::make(pool_, label_, sym(), prop());
   }
 
-  const Expression* label() const {
-    return label_;
-  }
-
-  Expression* label() {
+  const std::string& label() const {
     return label_;
   }
 
  private:
-  LabelTagPropertyExpression(ObjectPool* pool,
-                             Expression* label = nullptr,
-                             const std::string& tag = "",
-                             const std::string& prop = "")
+  explicit LabelTagPropertyExpression(ObjectPool* pool,
+                                      const std::string& label = "",
+                                      const std::string& tag = "",
+                                      const std::string& prop = "")
       : PropertyExpression(pool, Kind::kLabelTagProperty, "", tag, prop), label_(label) {}
 
   void writeTo(Encoder& encoder) const override;
   void resetFrom(Decoder& decoder) override;
 
  private:
-  Expression* label_{nullptr};
+  std::string label_;
 };
 
 // $-.any_prop_name

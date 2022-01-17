@@ -173,8 +173,7 @@ Expression* MatchSolver::makeIndexFilter(const std::string& label,
       } else {
         continue;
       }
-      if (static_cast<const PropertyExpression*>(la->label())->prop() != alias ||
-          la->sym() != label) {
+      if (la->label() != alias || la->sym() != label) {
         continue;
       }
       propName = la->prop();

@@ -204,7 +204,6 @@ void FindVisitor::visit(VertexExpression* expr) {
 void FindVisitor::visit(LabelTagPropertyExpression* expr) {
   findInCurrentExpr(expr);
   if (!needFindAll_ && !foundExprs_.empty()) return;
-  expr->label()->accept(this);
 }
 
 void FindVisitor::visit(EdgeExpression* expr) {
