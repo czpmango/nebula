@@ -73,6 +73,9 @@ class ExpressionUtils {
   // rewrite Agg to VarProp
   static Expression* rewriteAgg2VarProp(const Expression* expr);
 
+  // rewrite subExpr in Expr with corresponding VarPropExpression
+  static Expression* rewriteSubExpr2VarProp(const Expression* expr, const Expression* subExpr);
+
   // rewrite var in VariablePropExpr to another var
   static Expression* rewriteInnerVar(const Expression* expr, std::string newVar);
 
