@@ -68,6 +68,7 @@ StatusOr<OptRule::TransformResult> PushFilterDownProjectRule::transform(
                                                            Expression::Kind::kVarProperty,
                                                            Expression::Kind::kDstProperty,
                                                            Expression::Kind::kSrcProperty,
+                                                           Expression::Kind::kFunctionCall,
                                                        });
     if (varProps.empty()) {
       return false;

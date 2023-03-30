@@ -56,7 +56,7 @@ nebula_add_library(
     rule/PushLimitDownScanEdgesAppendVerticesRule.cpp
     rule/PushTopNDownIndexScanRule.cpp
     rule/PushLimitDownScanEdgesRule.cpp
-    rule/PushFilterDownTraverseRule.cpp
+    rule/PushFilterDownAppendVTraverseRule.cpp
     rule/RemoveAppendVerticesBelowJoinRule.cpp
 )
 
