@@ -5,14 +5,19 @@
 
 #include "graph/optimizer/rule/PushFilterDownTraverseRule.h"
 
+#include "common/expression/AttributeExpression.h"
 #include "common/expression/ConstantExpression.h"
 #include "common/expression/Expression.h"
+#include "common/expression/PredicateExpression.h"
+#include "common/expression/PropertyExpression.h"
+#include "common/expression/VariableExpression.h"
 #include "graph/optimizer/OptContext.h"
 #include "graph/optimizer/OptGroup.h"
 #include "graph/planner/plan/PlanNode.h"
 #include "graph/planner/plan/Query.h"
 #include "graph/util/ExpressionUtils.h"
 #include "graph/visitor/ExtractFilterExprVisitor.h"
+#include "graph/visitor/RewriteVisitor.h"
 
 using nebula::Expression;
 using nebula::graph::Filter;
@@ -40,6 +45,90 @@ bool PushFilterDownTraverseRule::match(OptContext* ctx, const MatchedResult& mat
   return OptRule::match(ctx, matched);
 }
 
+// Pick the `all` predicate for edges can be scattered as a single-hop edge predicate
+bool isEdgeAllPredicate(const Expression* e, const std::string& edgeAlias) {
+  if (e->kind() != Expression::Kind::kPredicate) {
+    return false;
+  }
+  auto* pe = static_cast<const PredicateExpression*>(e);
+  if (pe->name() != "all" || !pe->hasInnerVar()) {
+    return false;
+  }
+  auto var = pe->innerVar();
+  if (pe->collection()->kind() != Expression::Kind::kInputProperty) {
+    return false;
+  }
+  // Check edge collection expression
+  if (static_cast<const PropertyExpression*>(pe->collection())->prop() != edgeAlias) {
+    return false;
+  }
+  auto ves = graph::ExpressionUtils::collectAll(pe->filter(), {Expression::Kind::kAttribute});
+  for (const auto& ve : ves) {
+    auto iv = static_cast<const AttributeExpression*>(ve)->left();
+    if (iv->kind() != Expression::Kind::kVar) {
+      return false;
+    }
+    // Check inner vars
+    if (!static_cast<const VariableExpression*>(iv)->isInner()) {
+      // Only care inner edge vars
+      continue;
+    }
+    // Edge property must be ConstantExpression
+    auto ep = static_cast<const AttributeExpression*>(ve)->right();
+    if (ep->kind() != Expression::Kind::kConstant) {
+      return false;
+    }
+    // Edge property name should be string
+    if (!static_cast<const ConstantExpression*>(ep)->value().isStr()) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// where true==all(i in e where i.prop1>3 and i.prop2<=5) and all(i in e where i.prop3>30 and
+// i.prop4<=50) and <unpickedPredicateExpr> like.prop1>3 and like.prop2<=5 and like.prop3>30 and
+// like.prop4<=50
+
+// Pick sub-predicate
+
+// Rewrite edge all predicate to scattered single-hop edge predicate
+Expression* rewriteScatteredEdgePredicate(const Expression* edgeAllPredicate,
+                                          const std::string& edgeAlias) {
+  auto matcher = [&edgeAlias](const Expression* e) -> bool {
+    return isEdgeAllPredicate(e, edgeAlias);
+  };
+  auto rewriter = [](const Expression* e) -> Expression* {
+    DCHECK_EQ(e->kind(), Expression::Kind::kPredicate);
+    auto fe = static_cast<const PredicateExpression*>(e)->filter();
+
+    auto innerMatcher = [](const Expression* ae) {
+      if (ae->kind() != Expression::Kind::kAttribute) {
+        return false;
+      }
+      // All inner vars have been checked as matched edge in the external matcher and they all need
+      // to be rewritten
+      return static_cast<const AttributeExpression*>(ae)->left()->kind() == Expression::Kind::kVar;
+    };
+
+    auto innerRewriter = [](const Expression* ae) {
+      DCHECK_EQ(ae->kind(), Expression::Kind::kAttribute);
+      auto attributeExpr = static_cast<const AttributeExpression*>(ae);
+      auto* right = attributeExpr->right();
+      // Edge property name expressions have been checked in the external matcher
+      DCHECK_EQ(right->kind(), Expression::Kind::kConstant);
+      auto& prop = static_cast<const ConstantExpression*>(right)->value().getStr();
+      return EdgePropertyExpression::make(ae->getObjPool(), "*", prop);
+    };
+    // Rewrite all the inner var edge attribute expressions of `all` predicate's filter to
+    // EdgePropertyExpression
+    return graph::RewriteVisitor::transform(fe, std::move(innerMatcher), std::move(innerRewriter));
+  };
+  return graph::RewriteVisitor::transform(
+      edgeAllPredicate, std::move(matcher), std::move(rewriter));
+}
+
 StatusOr<OptRule::TransformResult> PushFilterDownTraverseRule::transform(
     OptContext* ctx, const MatchedResult& matched) const {
   auto* filterGroupNode = matched.node;
@@ -53,37 +142,25 @@ StatusOr<OptRule::TransformResult> PushFilterDownTraverseRule::transform(
   auto srcNodeAlias = tv->nodeAlias();
 
   auto qctx = ctx->qctx();
-  auto pool = qctx->objPool();
 
-  // Pick the expr looks like `$-.e[0].likeness
   auto picker = [&edgeAlias](const Expression* expr) -> bool {
-    bool shouldNotPick = false;
-    auto finder = [&shouldNotPick, &edgeAlias](const Expression* e) -> bool {
-      // When visiting the expression tree and find an expession node is a one step edge property
-      // expression, stop visiting its children and return true.
-      if (graph::ExpressionUtils::isOneStepEdgeProp(edgeAlias, e)) return true;
-      // Otherwise, continue visiting its children. And if the following two conditions are met,
-      // mark the expression as shouldNotPick and return false.
-      if (e->kind() == Expression::Kind::kInputProperty ||
-          e->kind() == Expression::Kind::kVarProperty) {
-        shouldNotPick = true;
+    bool neverPicked = false;
+    auto finder = [&neverPicked, &edgeAlias](const Expression* e) -> bool {
+      if (neverPicked) {
         return false;
       }
-      // TODO(jie): Handle the strange exists expr. e.g. exists(e.likeness)
-      if (e->kind() == Expression::Kind::kPredicate &&
-          static_cast<const PredicateExpression*>(e)->name() == "exists") {
-        shouldNotPick = true;
+      // UnaryNot change the semantics of `all` predicate to `any`, resulting in the inability to
+      // scatter the `all` edge predicate into a single-hop edge predicate(not cover double-not
+      // cases)
+      if (e->kind() == Expression::Kind::kUnaryNot) {
+        neverPicked = true;
         return false;
       }
-      return false;
+      return isEdgeAllPredicate(e, edgeAlias);
     };
-    graph::FindVisitor visitor(finder, true, true);
+    graph::FindVisitor visitor(finder);
     const_cast<Expression*>(expr)->accept(&visitor);
-    if (shouldNotPick) return false;
-    if (!visitor.results().empty()) {
-      return true;
-    }
-    return false;
+    return !visitor.results().empty();
   };
   Expression* filterPicked = nullptr;
   Expression* filterUnpicked = nullptr;
@@ -92,51 +169,8 @@ StatusOr<OptRule::TransformResult> PushFilterDownTraverseRule::transform(
   if (!filterPicked) {
     return TransformResult::noTransform();
   }
-  auto* newFilterPicked =
-      graph::ExpressionUtils::rewriteEdgePropertyFilter(pool, edgeAlias, filterPicked->clone());
 
-  Filter* newFilter = nullptr;
-  OptGroupNode* newFilterGroupNode = nullptr;
-  if (filterUnpicked) {
-    newFilter = Filter::make(qctx, nullptr, filterUnpicked);
-    newFilter->setOutputVar(filter->outputVar());
-    newFilter->setColNames(filter->colNames());
-    newFilterGroupNode = OptGroupNode::create(ctx, newFilter, filterGroup);
-  }
-
-  auto* newAv = static_cast<graph::AppendVertices*>(av->clone());
-
-  OptGroupNode* newAvGroupNode = nullptr;
-  if (newFilterGroupNode) {
-    auto* newAvGroup = OptGroup::create(ctx);
-    newAvGroupNode = newAvGroup->makeGroupNode(newAv);
-    newFilterGroupNode->dependsOn(newAvGroup);
-    newFilter->setInputVar(newAv->outputVar());
-  } else {
-    newAvGroupNode = OptGroupNode::create(ctx, newAv, filterGroup);
-    newAv->setOutputVar(filter->outputVar());
-  }
-
-  auto* eFilter = tv->eFilter();
-  Expression* newEFilter = eFilter
-                               ? LogicalExpression::makeAnd(pool, newFilterPicked, eFilter->clone())
-                               : newFilterPicked;
-
-  auto* newTv = static_cast<graph::Traverse*>(tv->clone());
-  newAv->setInputVar(newTv->outputVar());
-  newTv->setEdgeFilter(newEFilter);
-
-  auto* newTvGroup = OptGroup::create(ctx);
-  newAvGroupNode->dependsOn(newTvGroup);
-  auto* newTvGroupNode = newTvGroup->makeGroupNode(newTv);
-
-  for (auto dep : tvGroupNode->dependencies()) {
-    newTvGroupNode->dependsOn(dep);
-  }
-
-  TransformResult result;
-  result.eraseCurr = true;
-  result.newGroupNodes.emplace_back(newFilterGroupNode ? newFilterGroupNode : newAvGroupNode);
+  auto* scatteredEdgeFilter = rewriteScatteredEdgePredicate(filterPicked, edgeAlias);
 
   return result;
 }

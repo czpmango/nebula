@@ -1038,6 +1038,11 @@ void ExpressionUtils::splitFilter(const Expression *expr,
 
   std::vector<Expression *> &operands = logicExpr->operands();
   for (auto &operand : operands) {
+    // TODO(czp): Sink all NOTs to second layer [[Refactor]]
+    // TODO(czp): If find any not, dont pick this operand for now
+    if (ExpressionUtils::findAny(operand, {Expression::Kind::kUnaryNot})) {
+      continue;
+    }
     if (picker(operand)) {
       filterPickedPtr->addOperand(operand->clone());
     } else {
