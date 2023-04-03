@@ -46,7 +46,10 @@ bool PushFilterDownTraverseRule::match(OptContext* ctx, const MatchedResult& mat
 }
 
 // Pick the `all` predicate for edges can be scattered as a single-hop edge predicate
-bool isEdgeAllPredicate(const Expression* e, const std::string& edgeAlias) {
+bool isEdgeAllPredicate(const Expression* e,
+                        const std::string& edgeAlias,
+                        std::string& innerEdgeVar) {
+  innerEdgeVar = "";
   if (e->kind() != Expression::Kind::kPredicate) {
     return false;
   }
@@ -70,8 +73,8 @@ bool isEdgeAllPredicate(const Expression* e, const std::string& edgeAlias) {
     }
     // Check inner vars
     if (!static_cast<const VariableExpression*>(iv)->isInner()) {
-      // Only care inner edge vars
-      continue;
+      // FIXME(czp): Only care inner edge vars
+      return false;
     }
     // Edge property must be ConstantExpression
     auto ep = static_cast<const AttributeExpression*>(ve)->right();
@@ -84,6 +87,7 @@ bool isEdgeAllPredicate(const Expression* e, const std::string& edgeAlias) {
     }
   }
 
+  innerEdgeVar = var;
   return true;
 }
 
@@ -93,23 +97,25 @@ bool isEdgeAllPredicate(const Expression* e, const std::string& edgeAlias) {
 
 // Pick sub-predicate
 
-// Rewrite edge all predicate to scattered single-hop edge predicate
-Expression* rewriteScatteredEdgePredicate(const Expression* edgeAllPredicate,
-                                          const std::string& edgeAlias) {
-  auto matcher = [&edgeAlias](const Expression* e) -> bool {
-    return isEdgeAllPredicate(e, edgeAlias);
+// Rewrite edge `all` predicates to single-hop edge predicate
+Expression* rewriteEdgeAllPredicate(const Expression* expr, const std::string& edgeAlias) {
+  std::string innerEdgeVar;
+  auto matcher = [&edgeAlias, &innerEdgeVar](const Expression* e) -> bool {
+    return isEdgeAllPredicate(e, edgeAlias, innerEdgeVar);
   };
-  auto rewriter = [](const Expression* e) -> Expression* {
+  auto rewriter = [innerEdgeVar](const Expression* e) -> Expression* {
     DCHECK_EQ(e->kind(), Expression::Kind::kPredicate);
     auto fe = static_cast<const PredicateExpression*>(e)->filter();
 
-    auto innerMatcher = [](const Expression* ae) {
+    auto innerMatcher = [innerEdgeVar](const Expression* ae) {
       if (ae->kind() != Expression::Kind::kAttribute) {
         return false;
       }
-      // All inner vars have been checked as matched edge in the external matcher and they all need
-      // to be rewritten
-      return static_cast<const AttributeExpression*>(ae)->left()->kind() == Expression::Kind::kVar;
+      auto innerEdgeVarExpr = static_cast<const AttributeExpression*>(ae)->left();
+      if (innerEdgeVarExpr->kind() != Expression::Kind::kVar) {
+        return false;
+      }
+      return static_cast<const VariableExpression*>(innerEdgeVarExpr)->var() == innerEdgeVar;
     };
 
     auto innerRewriter = [](const Expression* ae) {
@@ -125,8 +131,7 @@ Expression* rewriteScatteredEdgePredicate(const Expression* edgeAllPredicate,
     // EdgePropertyExpression
     return graph::RewriteVisitor::transform(fe, std::move(innerMatcher), std::move(innerRewriter));
   };
-  return graph::RewriteVisitor::transform(
-      edgeAllPredicate, std::move(matcher), std::move(rewriter));
+  return graph::RewriteVisitor::transform(expr, std::move(matcher), std::move(rewriter));
 }
 
 StatusOr<OptRule::TransformResult> PushFilterDownTraverseRule::transform(
@@ -150,13 +155,15 @@ StatusOr<OptRule::TransformResult> PushFilterDownTraverseRule::transform(
         return false;
       }
       // UnaryNot change the semantics of `all` predicate to `any`, resulting in the inability to
-      // scatter the `all` edge predicate into a single-hop edge predicate(not cover double-not
+      // scatter the edge `all` predicate into a single-hop edge predicate(not cover double-not
       // cases)
       if (e->kind() == Expression::Kind::kUnaryNot) {
         neverPicked = true;
         return false;
       }
-      return isEdgeAllPredicate(e, edgeAlias);
+      // Not used, the picker only cares if there is an edge `all` predicate in the current operand
+      std::string innerVar;
+      return isEdgeAllPredicate(e, edgeAlias, innerVar);
     };
     graph::FindVisitor visitor(finder);
     const_cast<Expression*>(expr)->accept(&visitor);
@@ -170,7 +177,7 @@ StatusOr<OptRule::TransformResult> PushFilterDownTraverseRule::transform(
     return TransformResult::noTransform();
   }
 
-  auto* scatteredEdgeFilter = rewriteScatteredEdgePredicate(filterPicked, edgeAlias);
+  auto* edgeFilter = rewriteEdgeAllPredicate(filterPicked, edgeAlias);
 
   return result;
 }
